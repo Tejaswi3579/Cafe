@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Orders - Coffee Shop</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600&display=swap">
+    <style>
+        body {
+            font-family: 'Raleway', sans-serif;
+            background-image: url('path/to/your/coffee-background.jpg'); /* Replace with your coffee background image path */
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 2rem;
+            color: #333;
+        }
+        .order-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            margin: 2rem auto;
+            backdrop-filter: blur(5px);
+        }
+        h2 {
+            text-align: center;
+            color: #6B4226; /* Coffee color */
+            margin-bottom: 1.5rem;
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+        .order-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .order-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid #ddd;
+            background-color: #fff5e6;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, background-color 0.3s;
+            position: relative;
+        }
+        .order-item:hover {
+            background-color: #fce5cd; /* Light coffee color */
+            transform: translateY(-3px);
+        }
+        .product-name {
+            font-weight: 600;
+            color: #6B4226; /* Coffee color */
+            font-size: 1.2rem;
+        }
+        .product-details {
+            color: #555;
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+        .cancel-button {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background-color: #d9534f;
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .cancel-button:hover {
+            background-color: #c9302c;
+        }
+        #username-display {
+            display: block;
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            color: #6B4226;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="order-container">
+        <h2>Your Ordered Products</h2>
+        <span id="username-display"></span>
+        <ul class="order-list" id="orderList"></ul>
+    </div>
+
+    <script>
+        // Fetch the username from the session and display it on the page
+        fetch('/getUsername')
+            .then(response => response.json())
+            .then(data => {
+                if (data.username) {
+                    document.getElementById("username-display").innerText = `Welcome, ${data.username}`;
+                    displayOrders(data.username); // Fetch and display orders for the user
+                } else {
+                    window.location.href = '/'; // Redirect to login page if not logged in
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching username:", error);
+            });
+
+        // Function to fetch and display orders for the logged-in user
+        async function displayOrders(username) {
+            const orderList = document.getElementById('orderList');
+            orderList.innerHTML = ''; // Clear previous orders
+
+            try {
+                const response = await fetch(`/get-orders?username=${encodeURIComponent(username)}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch orders');
+                }
+
+                const orders = await response.json();
+
+                if (orders.length === 0) {
+                    orderList.innerHTML = '<li>No orders found for this user.</li>';
+                } else {
+                    orders.forEach(order => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('order-item');
+                        listItem.innerHTML = `
+                            <span class="product-name">${order.product_name}</span>
+                            <div class="product-details">Quantity: ${order.quantity || 1}</div>
+                            <div class="product-details">Total Cost: $${order.totalCost.toFixed(2)}</div>
+                            <button class="cancel-button" onclick="cancelOrder('${order._id}')">Cancel</button>
+                        `;
+                        orderList.appendChild(listItem);
+                    });
+                }
+            } catch (error) {
+                orderList.innerHTML = `<li>Error: ${error.message}</li>`;
+            }
+        }
+
+       function cancelOrder(orderId) {
+    fetch('/cancel-order', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId: orderId }),
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('Order canceled successfully');
+            location.reload(); // Refresh the page
+        } else {
+            alert('Failed to cancel the order');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+		
+		
+    </script>
+
+</body>
+</html>

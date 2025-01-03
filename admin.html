@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet"> <!-- Stylish Font -->
+
+    <style>
+        /* General styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-image: url('https://i.pinimg.com/474x/7a/9b/7c/7a9b7cbcd03a7766382738b42e34ea64.jpg');
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            padding: 0;
+            color: #f1f1f1;
+        }
+
+        /* Updated Admin Dashboard title */
+        h1 {
+            text-align: center;
+            font-family: 'Lobster', cursive; /* Stylish font */
+            font-size: 3rem; /* Larger font size */
+            color: black; /* Set the text color to black */
+            padding-top: 50px;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5); /* Add a subtle shadow effect */
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            margin-top: 50px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: rgba(30, 30, 30, 0.9);
+            border-radius: 10px;
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            color: #f39c12;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+
+        table th, table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+
+        table th {
+            background-color: #333;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        table td {
+            background-color: #444;
+            color: #f1f1f1;
+        }
+
+        .button {
+            padding: 10px 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .button:hover {
+            background-color: #c0392b;
+            transform: scale(1.05);
+        }
+
+        .delete-product {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .delete-product:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+
+        .action-column {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .action-column button {
+            margin: 0 5px;
+        }
+
+        /* Add responsive design for smaller screens */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .section {
+                padding: 15px;
+            }
+
+            table th, table td {
+                font-size: 0.9rem;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Admin Dashboard</h1>
+
+    <div class="container">
+        <div class="section">
+            <h2>Users</h2>
+            <table id="user-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Password</th> <!-- Added password column -->
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Users will be dynamically populated here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Orders</h2>
+            <table id="order-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Product Name</th>
+                        <th>Total Cost</th>
+                        <th>Order Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Orders will be dynamically populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Fetch users and orders from the server
+            $.get('/admin/get-users', function(users) {
+                users.forEach(user => {
+                    $('#user-table tbody').append(
+                        `<tr>
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td>${user.password}</td> <!-- Display password here -->
+                            <td><button class="button delete-user" data-id="${user._id}">Delete</button></td>
+                        </tr>`
+                    );
+                });
+            });
+
+            // Fetch orders from the server
+            $.get('/admin/get-orders', function(orders) {
+                orders.forEach(order => {
+                    $('#order-table tbody').append(
+                        `<tr>
+                            <td>${order.username}</td>
+                            <td>${order.product_name}</td>
+                            <td>${order.totalCost}</td>
+                            <td>${new Date(order.date).toLocaleString()}</td>
+                        </tr>`
+                    );
+                });
+            });
+
+            // Delete user functionality
+            $(document).on('click', '.delete-user', function() {
+                const userId = $(this).data('id');
+                $.ajax({
+                    url: '/admin/delete-user',
+                    type: 'DELETE',
+                    data: JSON.stringify({ userId }),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        if (response.success) {
+                            alert('User deleted successfully');
+                            location.reload(); // Reload to update the table
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Error deleting user');
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
